@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Thiresh Pharmaceuticals — Field Register</title>
+
+<!-- PWA: installable on iPhone and Android -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#16302B">
+<meta name="background-color" content="#EEF1EC">
+
+<!-- iOS home-screen behaviour -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Thiresh Register">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+
+<!-- Android / Chrome home-screen icon -->
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<style>
+  :root{
+    --ink:#16302B;
+    --ink-soft:#274B43;
+    --paper:#EEF1EC;
+    --paper-raised:#FFFFFF;
+    --line:#D6DCD3;
+    --brass:#A6802E;
+    --brass-soft:#EFE4C8;
+    --rust:#B0532C;
+    --rust-soft:#F3DFD4;
+    --teal:#3F7D6E;
+    --teal-soft:#DCEAE5;
+    --text:#1D2B27;
+    --text-mute:#5B6B65;
+    --font-display: 'Source Serif 4', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:var(--font-body); background:var(--paper); color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---- sidebar ---- */
+  .sidebar{
+    width:230px; flex-shrink:0; background:var(--ink); color:#EFF4F1;
+    display:flex; flex-direction:column; padding:28px 0 20px;
+    position:sticky; top:0; height:100vh;
+  }
+  .brand{ padding:0 22px 22px; border-bottom:1px solid rgba(255,255,255,0.12); margin-bottom:14px;}
+  .brand .rx{
+    font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--brass-soft);
+    line-height:1;
+  }
+  .brand .name{ font-family:var(--font-display); font-size:17px; font-weight:600; margin-top:8px; letter-spacing:0.2px;}
+  .brand .tag{ font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:#9DB4AC; margin-top:5px;}
+
+  nav{ display:flex; flex-direction:column; gap:2px; padding:8px 12px; flex:1;}
+  .nav-btn{
+    display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:7px; cursor:pointer;
+    color:#CFE0D9; font-size:14px; font-weight:500; border:none; background:transparent; text-align:left;
+    font-family:var(--font-body); transition:background .15s ease;
+  }
+  .nav-btn:hover{ background:rgba(255,255,255,0.06); }
+  .nav-btn.active{ background:var(--ink-soft); color:#fff; }
+  .nav-btn .dot{ width:6px;height:6px;border-radius:50%; background:var(--brass); flex-shrink:0; opacity:0;}
+  .nav-btn.active .dot{ opacity:1;}
+  .sidebar-foot{ padding:14px 22px 0; font-size:11px; color:#7E9990; border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; padding-top:14px;}
+
+  /* ---- main ---- */
+  main{ flex:1; padding:34px 40px 60px; max-width:1180px; }
+  .page-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:26px; flex-wrap:wrap; gap:14px;}
+  .page-head h1{ font-family:var(--font-display); font-size:28px; margin:0; font-weight:600; color:var(--ink);}
+  .page-head p{ margin:4px 0 0; color:var(--text-mute); font-size:13.5px;}
+  .btn{
+    background:var(--ink); color:#fff; border:none; padding:10px 18px; border-radius:7px; font-size:13.5px;
+    font-weight:600; cursor:pointer; font-family:var(--font-body); display:inline-flex; align-items:center; gap:6px;
+    transition: transform .12s ease, background .15s ease;
+  }
+  .btn:hover{ background:var(--ink-soft); }
+  .btn:active{ transform:scale(0.98); }
+  .btn.ghost{ background:transparent; color:var(--ink); border:1.5px solid var(--line); }
+  .btn.ghost:hover{ background:#fff; }
+  .btn.danger{ background:transparent; color:var(--rust); }
+  .btn.small{ padding:6px 11px; font-size:12.5px; border-radius:6px;}
+
+  /* stat cards - "tear-off" pad look */
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin-bottom:30px;}
+  .stat-card{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px; padding:18px 20px;
+    position:relative; overflow:hidden;
+  }
+  .stat-card::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--brass);
+  }
+  .stat-card.alert::before{ background:var(--rust); }
+  .stat-card .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:1px; color:var(--text-mute); font-weight:600;}
+  .stat-card .value{ font-family:var(--font-display); font-size:26px; font-weight:600; color:var(--ink); margin-top:6px;}
+  .stat-card .sub{ font-size:12px; color:var(--text-mute); margin-top:3px;}
+
+  .panel{ background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; padding:22px; margin-bottom:22px;}
+  .panel h2{ font-family:var(--font-display); font-size:17px; margin:0 0 14px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:8px;}
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{ text-align:left; padding:9px 10px; color:var(--text-mute); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.6px; border-bottom:2px solid var(--line);}
+  td{ padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{ border-bottom:none;}
+  tr:hover td{ background:#FAFAF7; }
+  .mono{ font-family:var(--font-mono); font-size:12.5px; }
+  .num{ text-align:right; font-family:var(--font-mono); }
+
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600;
+    letter-spacing:0.3px;
+  }
+  .badge.ok{ background:var(--teal-soft); color:var(--teal); }
+  .badge.warn{ background:var(--brass-soft); color:var(--brass); }
+  .badge.bad{ background:var(--rust-soft); color:var(--rust); }
+
+  .stamp{
+    display:inline-block; border:1.5px solid currentColor; border-radius:4px; padding:2px 7px;
+    font-family:var(--font-mono); font-size:10.5px; font-weight:600; letter-spacing:0.5px;
+    transform:rotate(-2deg);
+  }
+
+  .toolbar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;}
+  input[type=text], input[type=number], input[type=date], select, textarea{
+    font-family:var(--font-body); font-size:13.5px; padding:9px 11px; border:1.5px solid var(--line);
+    border-radius:7px; background:#fff; color:var(--text); width:100%;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--teal); }
+  .search{ max-width:260px; }
+  .row-actions{ display:flex; gap:6px; }
+  .icon-btn{ background:none; border:none; cursor:pointer; padding:4px 6px; font-size:14px; border-radius:5px; color:var(--text-mute);}
+  .icon-btn:hover{ background:var(--paper); color:var(--ink);}
+  .empty{ text-align:center; padding:40px 20px; color:var(--text-mute); }
+  .empty .big{ font-family:var(--font-display); font-size:16px; color:var(--ink); margin-bottom:6px;}
+
+  /* modal */
+  .overlay{ position:fixed; inset:0; background:rgba(22,48,43,0.45); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .overlay.show{ display:flex; }
+  .modal{ background:#fff; border-radius:12px; padding:26px; width:100%; max-width:480px; max-height:88vh; overflow-y:auto; }
+  .modal h3{ font-family:var(--font-display); margin:0 0 16px; font-size:19px; color:var(--ink);}
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--text-mute); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;}
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+
+  .section{ display:none; }
+  .section.active{ display:block; }
+
+  .expiry-tag{ font-family:var(--font-mono); font-size:12px; }
+
+  ::-webkit-scrollbar{ width:9px; height:9px;}
+  ::-webkit-scrollbar-thumb{ background:#C6CFC5; border-radius:5px;}
+
+  @media (max-width:760px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto; padding:14px;}
+    .brand{ display:none; }
+    nav{ flex-direction:row; padding:0; }
+    main{ padding:20px; }
+    .field-row{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="rx">℞</div>
+      <div class="name">Thiresh<br>Pharmaceuticals</div>
+      <div class="tag">Field Register</div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">Data is stored privately to your account.</div>
+  </aside>
+
+  <main>
+    <div id="content"></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   Thiresh Pharmaceuticals — Field Register
+   Modules: Dashboard, Stock, Expenses, Stockists, Doctors, Visits
+   Persistence via window.storage (personal, per-user)
+--------------------------------------------------------------- */
+
+const KEYS = {
+  stock: 'thiresh:stock',
+  expenses: 'thiresh:expenses',
+  stockists: 'thiresh:stockists',
+  doctors: 'thiresh:doctors',
+  visits: 'thiresh:visits'
+};
+
+let DATA = { stock: [], expenses: [], stockists: [], doctors: [], visits: [] };
+let CURRENT = 'dashboard';
+let LOADED = false;
+
+const NAV_ITEMS = [
+  { id:'dashboard', label:'Dashboard', icon:'◆' },
+  { id:'stock', label:'Stock', icon:'⬡' },
+  { id:'expenses', label:'Expenses', icon:'₹' },
+  { id:'stockists', label:'Stockists', icon:'⬢' },
+  { id:'doctors', label:'Doctors', icon:'✚' },
+  { id:'visits', label:'Visits', icon:'→' },
+];
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmtMoney(n){ n = Number(n)||0; return '₹' + n.toLocaleString('en-IN', {maximumFractionDigits:0}); }
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d+'T00:00:00'); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function daysUntil(d){ if(!d) return null; const dt = new Date(d+'T00:00:00'); const now = new Date(); now.setHours(0,0,0,0); return Math.round((dt-now)/86400000); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadAll(){
+  const keys = Object.entries(KEYS);
+  await Promise.all(keys.map(async ([k, storageKey])=>{
+    try{
+      const res = await window.storage.get(storageKey, false);
+      DATA[k] = res ? JSON.parse(res.value) : [];
+    }catch(e){ DATA[k] = []; }
+  }));
+  LOADED = true;
+}
+
+async function save(key){
+  try{ await window.storage.set(KEYS[key], JSON.stringify(DATA[key]), false); }
+  catch(e){ console.error('storage save failed', e); }
+}
+
+/* ---------------- NAV ---------------- */
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = NAV_ITEMS.map(it => `
+    <button class="nav-btn ${CURRENT===it.id?'active':''}" data-nav="${it.id}">
+      <span class="dot"></span><span>${it.icon}</span><span>${it.label}</span>
+    </button>
+  `).join('');
+  nav.querySelectorAll('[data-nav]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ CURRENT = btn.dataset.nav; renderAll(); });
+  });
+}
+
+function renderAll(){
+  renderNav();
+  const content = document.getElementById('content');
+  if(CURRENT==='dashboard') content.innerHTML = renderDashboard();
+  if(CURRENT==='stock') content.innerHTML = renderStock();
+  if(CURRENT==='expenses') content.innerHTML = renderExpenses();
+  if(CURRENT==='stockists') content.innerHTML = renderStockists();
+  if(CURRENT==='doctors') content.innerHTML = renderDoctors();
+  if(CURRENT==='visits') content.innerHTML = renderVisits();
+  attachHandlers();
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function renderDashboard(){
+  const stockValue = DATA.stock.reduce((s,i)=> s + (Number(i.qty)*Number(i.price)||0), 0);
+  const lowStock = DATA.stock.filter(i => Number(i.qty) <= Number(i.threshold||0));
+  const expiringSoon = DATA.stock.filter(i => { const d = daysUntil(i.expiry); return d!==null && d<=60; }).sort((a,b)=>daysUntil(a.expiry)-daysUntil(b.expiry));
+  const now = new Date(); const ym = now.toISOString().slice(0,7);
+  const monthExpense = DATA.expenses.filter(e => (e.date||'').slice(0,7)===ym).reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const upcomingVisits = DATA.visits.filter(v=>{ const d = daysUntil(v.date); return d!==null && d>=0 && d<=7; }).sort((a,b)=> new Date(a.date)-new Date(b.date));
+  const overdueFollowups = DATA.visits.filter(v=>{ const d = daysUntil(v.followup); return d!==null && d<0; });
+
+  return `
+    <div class="page-head">
+      <div><h1>Dashboard</h1><p>Snapshot of stock, spend, and field activity.</p></div>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><div class="label">Stock value</div><div class="value">${fmtMoney(stockValue)}</div><div class="sub">${DATA.stock.length} SKUs on record</div></div>
+      <div class="stat-card ${lowStock.length?'alert':''}"><div class="label">Low stock items</div><div class="value">${lowStock.length}</div><div class="sub">at or below reorder level</div></div>
+      <div class="stat-card ${expiringSoon.length?'alert':''}"><div class="label">Expiring within 60 days</div><div class="value">${expiringSoon.length}</div><div class="sub">batches to clear or return</div></div>
+      <div class="stat-card"><div class="label">This month's expenses</div><div class="value">${fmtMoney(monthExpense)}</div><div class="sub">${now.toLocaleDateString('en-IN',{month:'long',year:'numeric'})}</div></div>
+      <div class="stat-card"><div class="label">Visits — next 7 days</div><div class="value">${upcomingVisits.length}</div><div class="sub">doctors &amp; stockists</div></div>
+      <div class="stat-card ${overdueFollowups.length?'alert':''}"><div class="label">Overdue follow-ups</div><div class="value">${overdueFollowups.length}</div><div class="sub">past their follow-up date</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>⬡ Low stock &amp; expiring batches</h2>
+      ${ (lowStock.length+expiringSoon.length)===0 ? `<div class="empty">Nothing needs attention right now.</div>` : `
+      <table><thead><tr><th>Item</th><th>Batch</th><th>Qty</th><th>Expiry</th><th>Status</th></tr></thead><tbody>
+      ${[...new Map([...lowStock, ...expiringSoon].map(i=>[i.id,i])).values()].map(i=>{
+        const d = daysUntil(i.expiry);
+        const low = Number(i.qty) <= Number(i.threshold||0);
+        let badge = '';
+        if(d!==null && d<0) badge = `<span class="badge bad">Expired</span>`;
+        else if(d!==null && d<=60) badge = `<span class="badge warn">Expires in ${d}d</span>`;
+        if(low) badge += ` <span class="badge bad">Low stock</span>`;
+        return `<tr><td>${esc(i.name)}</td><td class="mono">${esc(i.batch||'—')}</td><td class="num">${i.qty}</td><td class="expiry-tag">${fmtDate(i.expiry)}</td><td>${badge}</td></tr>`;
+      }).join('')}
+      </tbody></table>`}
+    </div>
+
+    <div class="panel">
+      <h2>→ Upcoming visits</h2>
+      ${upcomingVisits.length===0 ? `<div class="empty">No visits scheduled in the next 7 days.</div>` : `
+      <table><thead><tr><th>Date</th><th>Who</th><th>Type</th><th>Purpose</th></tr></thead><tbody>
+      ${upcomingVisits.map(v=>`<tr><td class="mono">${fmtDate(v.date)}</td><td>${esc(v.name)}</td><td><span class="badge ok">${esc(v.type)}</span></td><td>${esc(v.purpose||'—')}</td></tr>`).join('')}
+      </tbody></table>`}
+    </div>
+  `;
+}
+
+/* ---------------- STOCK ---------------- */
+function renderStock(){
+  const rows = DATA.stock.slice().sort((a,b)=> (daysUntil(a.expiry)??9999) - (daysUntil(b.expiry)??9999));
+  return `
+    <div class="page-head">
+      <div><h1>Stock</h1><p>Medicines and batches on hand.</p></div>
+      <button class="btn" data-open="stock">+ Add stock item</button>
+    </div>
+    <div class="panel">
+      <div class="toolbar"><input type="text" class="search" id="stockSearch" placeholder="Search by name or batch…"></div>
+      <div id="stockTableWrap">${stockTable(rows)}</div>
+    </div>
+  `;
+}
+function stockTable(rows){
+  if(rows.length===0) return `<div class="empty"><div class="big">No stock recorded yet</div>Add your first item to start tracking inventory.</div>`;
+  return `<table><thead><tr><th>Name</th><th>Batch</th><th>Qty</th><th>Reorder at</th><th>Unit price</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>
+  ${rows.map(i=>{
+    const d = daysUntil(i.expiry);
+    const low = Number(i.qty) <= Number(i.threshold||0);
+    let badge = `<span class="badge ok">OK</span>`;
+    if(d!==null && d<0) badge = `<span class="badge bad">Expired</span>`;
+    else if(d!==null && d<=60) badge = `<span class="badge warn">Expires ${d}d</span>`;
+    if(low) badge += ` <span class="badge bad">Low</span>`;
+    return `<tr>
+      <td>${esc(i.name)}</td><td class="mono">${esc(i.batch||'—')}</td>
+      <td class="num">${i.qty}</td><td class="num">${i.threshold||0}</td>
+      <td class="num">${fmtMoney(i.price)}</td><td class="expiry-tag">${fmtDate(i.expiry)}</td>
+      <td>${badge}</td>
+      <td class="row-actions">
+        <button class="icon-btn" data-edit="stock" data-id="${i.id}">✎</button>
+        <button class="icon-btn" data-del="stock" data-id="${i.id}">✕</button>
+      </td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+
+/* ---------------- EXPENSES ---------------- */
+function renderExpenses(){
+  const rows = DATA.expenses.slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const total = rows.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  return `
+    <div class="page-head">
+      <div><h1>Expenses</h1><p>Travel, samples, and promotional spend.</p></div>
+      <button class="btn" data-open="expenses">+ Add expense</button>
+    </div>
+    <div class="stats"><div class="stat-card"><div class="label">Total recorded</div><div class="value">${fmtMoney(total)}</div><div class="sub">${rows.length} entries</div></div></div>
+    <div class="panel">
+      <div class="toolbar"><input type="text" class="search" id="expenseSearch" placeholder="Search by category or note…"></div>
+      <div id="expenseTableWrap">${expenseTable(rows)}</div>
+    </div>
+  `;
+}
+function expenseTable(rows){
+  if(rows.length===0) return `<div class="empty"><div class="big">No expenses recorded yet</div>Log your first expense to start tracking spend.</div>`;
+  return `<table><thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Note</th><th></th></tr></thead><tbody>
+  ${rows.map(e=>`<tr>
+    <td class="mono">${fmtDate(e.date)}</td>
+    <td><span class="stamp" style="color:var(--brass)">${esc(e.category)}</span></td>
+    <td class="num">${fmtMoney(e.amount)}</td>
+    <td>${esc(e.note||'—')}</td>
+    <td class="row-actions">
+      <button class="icon-btn" data-edit="expenses" data-id="${e.id}">✎</button>
+      <button class="icon-btn" data-del="expenses" data-id="${e.id}">✕</button>
+    </td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ---------------- STOCKISTS ---------------- */
+function renderStockists(){
+  const rows = DATA.stockists.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  return `
+    <div class="page-head">
+      <div><h1>Stockists</h1><p>Distributors and retail stockists.</p></div>
+      <button class="btn" data-open="stockists">+ Add stockist</button>
+    </div>
+    <div class="panel">
+      <div class="toolbar"><input type="text" class="search" id="stockistSearch" placeholder="Search by name or area…"></div>
+      <div id="stockistTableWrap">${stockistTable(rows)}</div>
+    </div>
+  `;
+}
+function stockistTable(rows){
+  if(rows.length===0) return `<div class="empty"><div class="big">No stockists added yet</div>Add a stockist to keep their contact and balance on record.</div>`;
+  return `<table><thead><tr><th>Name</th><th>Contact person</th><th>Phone</th><th>Area</th><th>Outstanding</th><th></th></tr></thead><tbody>
+  ${rows.map(s=>`<tr>
+    <td>${esc(s.name)}</td><td>${esc(s.contact||'—')}</td><td class="mono">${esc(s.phone||'—')}</td>
+    <td>${esc(s.area||'—')}</td><td class="num">${fmtMoney(s.outstanding)}</td>
+    <td class="row-actions">
+      <button class="icon-btn" data-edit="stockists" data-id="${s.id}">✎</button>
+      <button class="icon-btn" data-del="stockists" data-id="${s.id}">✕</button>
+    </td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ---------------- DOCTORS ---------------- */
+function renderDoctors(){
+  const rows = DATA.doctors.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  return `
+    <div class="page-head">
+      <div><h1>Doctors</h1><p>Prescribers and clinic contacts.</p></div>
+      <button class="btn" data-open="doctors">+ Add doctor</button>
+    </div>
+    <div class="panel">
+      <div class="toolbar"><input type="text" class="search" id="doctorSearch" placeholder="Search by name or specialty…"></div>
+      <div id="doctorTableWrap">${doctorTable(rows)}</div>
+    </div>
+  `;
+}
+function doctorTable(rows){
+  if(rows.length===0) return `<div class="empty"><div class="big">No doctors added yet</div>Add a doctor to plan visits and track relationships.</div>`;
+  return `<table><thead><tr><th>Name</th><th>Specialty</th><th>Hospital / Clinic</th><th>Phone</th><th>Area</th><th></th></tr></thead><tbody>
+  ${rows.map(d=>`<tr>
+    <td>Dr. ${esc(d.name)}</td><td>${esc(d.specialty||'—')}</td><td>${esc(d.hospital||'—')}</td>
+    <td class="mono">${esc(d.phone||'—')}</td><td>${esc(d.area||'—')}</td>
+    <td class="row-actions">
+      <button class="icon-btn" data-edit="doctors" data-id="${d.id}">✎</button>
+      <button class="icon-btn" data-del="doctors" data-id="${d.id}">✕</button>
+    </td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ---------------- VISITS ---------------- */
+function renderVisits(){
+  const rows = DATA.visits.slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
+  return `
+    <div class="page-head">
+      <div><h1>Visits</h1><p>Field visit log — doctors and stockists.</p></div>
+      <button class="btn" data-open="visits">+ Log a visit</button>
+    </div>
+    <div class="panel">
+      <div class="toolbar"><input type="text" class="search" id="visitSearch" placeholder="Search by name or purpose…"></div>
+      <div id="visitTableWrap">${visitTable(rows)}</div>
+    </div>
+  `;
+}
+function visitTable(rows){
+  if(rows.length===0) return `<div class="empty"><div class="big">No visits logged yet</div>Log a visit to start building your field history.</div>`;
+  return `<table><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Purpose</th><th>Follow-up</th><th></th></tr></thead><tbody>
+  ${rows.map(v=>{
+    const fd = daysUntil(v.followup);
+    let fu = v.followup ? fmtDate(v.followup) : '—';
+    if(fd!==null && fd<0) fu = `<span class="badge bad">${fu} — overdue</span>`;
+    else if(v.followup) fu = `<span class="badge ok">${fu}</span>`;
+    return `<tr>
+    <td class="mono">${fmtDate(v.date)}</td><td>${esc(v.name)}</td>
+    <td><span class="badge ok">${esc(v.type)}</span></td><td>${esc(v.purpose||'—')}</td>
+    <td>${fu}</td>
+    <td class="row-actions">
+      <button class="icon-btn" data-edit="visits" data-id="${v.id}">✎</button>
+      <button class="icon-btn" data-del="visits" data-id="${v.id}">✕</button>
+    </td>
+  </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+
+/* ---------------- MODALS / FORMS ---------------- */
+const FORMS = {
+  stock: {
+    title: (isEdit)=> isEdit ? 'Edit stock item' : 'Add stock item',
+    fields: (d={}) => `
+      <div class="field"><label>Item name</label><input type="text" id="f_name" value="${esc(d.name||'')}" required></div>
+      <div class="field-row">
+        <div class="field"><label>Batch no.</label><input type="text" id="f_batch" value="${esc(d.batch||'')}"></div>
+        <div class="field"><label>Expiry date</label><input type="date" id="f_expiry" value="${esc(d.expiry||'')}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantity</label><input type="number" id="f_qty" value="${d.qty??''}" min="0"></div>
+        <div class="field"><label>Reorder level</label><input type="number" id="f_threshold" value="${d.threshold??''}" min="0"></div>
+      </div>
+      <div class="field"><label>Unit price (₹)</label><input type="number" id="f_price" value="${d.price??''}" min="0" step="0.01"></div>
+    `,
+    read: () => ({
+      name: document.getElementById('f_name').value.trim(),
+      batch: document.getElementById('f_batch').value.trim(),
+      expiry: document.getElementById('f_expiry').value,
+      qty: document.getElementById('f_qty').value,
+      threshold: document.getElementById('f_threshold').value,
+      price: document.getElementById('f_price').value,
+    })
+  },
+  expenses: {
+    title: (isEdit)=> isEdit ? 'Edit expense' : 'Add expense',
+    fields: (d={}) => `
+      <div class="field-row">
+        <div class="field"><label>Date</label><input type="date" id="f_date" value="${esc(d.date||new Date().toISOString().slice(0,10))}"></div>
+        <div class="field"><label>Category</label>
+          <select id="f_category">
+            ${['Travel','Samples','Promotional','Lodging','Food','Other'].map(c=>`<option ${d.category===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Amount (₹)</label><input type="number" id="f_amount" value="${d.amount??''}" min="0" step="0.01"></div>
+      <div class="field"><label>Note</label><textarea id="f_note" rows="3">${esc(d.note||'')}</textarea></div>
+    `,
+    read: () => ({
+      date: document.getElementById('f_date').value,
+      category: document.getElementById('f_category').value,
+      amount: document.getElementById('f_amount').value,
+      note: document.getElementById('f_note').value.trim(),
+    })
+  },
+  stockists: {
+    title:(isEdit)=> isEdit ? 'Edit stockist' : 'Add stockist',
+    fields:(d={}) => `
+      <div class="field"><label>Stockist name</label><input type="text" id="f_name" value="${esc(d.name||'')}"></div>
+      <div class="field-row">
+        <div class="field"><label>Contact person</label><input type="text" id="f_contact" value="${esc(d.contact||'')}"></div>
+        <div class="field"><label>Phone</label><input type="text" id="f_phone" value="${esc(d.phone||'')}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Area</label><input type="text" id="f_area" value="${esc(d.area||'')}"></div>
+        <div class="field"><label>Outstanding (₹)</label><input type="number" id="f_outstanding" value="${d.outstanding??0}" step="0.01"></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="f_notes" rows="2">${esc(d.notes||'')}</textarea></div>
+    `,
+    read: () => ({
+      name: document.getElementById('f_name').value.trim(),
+      contact: document.getElementById('f_contact').value.trim(),
+      phone: document.getElementById('f_phone').value.trim(),
+      area: document.getElementById('f_area').value.trim(),
+      outstanding: document.getElementById('f_outstanding').value,
+      notes: document.getElementById('f_notes').value.trim(),
+    })
+  },
+  doctors: {
+    title:(isEdit)=> isEdit ? 'Edit doctor' : 'Add doctor',
+    fields:(d={}) => `
+      <div class="field"><label>Doctor name (without "Dr.")</label><input type="text" id="f_name" value="${esc(d.name||'')}"></div>
+      <div class="field-row">
+        <div class="field"><label>Specialty</label><input type="text" id="f_specialty" value="${esc(d.specialty||'')}"></div>
+        <div class="field"><label>Phone</label><input type="text" id="f_phone" value="${esc(d.phone||'')}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Hospital / Clinic</label><input type="text" id="f_hospital" value="${esc(d.hospital||'')}"></div>
+        <div class="field"><label>Area</label><input type="text" id="f_area" value="${esc(d.area||'')}"></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="f_notes" rows="2">${esc(d.notes||'')}</textarea></div>
+    `,
+    read: () => ({
+      name: document.getElementById('f_name').value.trim(),
+      specialty: document.getElementById('f_specialty').value.trim(),
+      phone: document.getElementById('f_phone').value.trim(),
+      hospital: document.getElementById('f_hospital').value.trim(),
+      area: document.getElementById('f_area').value.trim(),
+      notes: document.getElementById('f_notes').value.trim(),
+    })
+  },
+  visits: {
+    title:(isEdit)=> isEdit ? 'Edit visit' : 'Log a visit',
+    fields:(d={}) => {
+      const names = [
+        ...DATA.doctors.map(x=>({label:'Dr. '+x.name, value:'Dr. '+x.name})),
+        ...DATA.stockists.map(x=>({label:x.name, value:x.name}))
+      ];
+      return `
+      <div class="field-row">
+        <div class="field"><label>Date</label><input type="date" id="f_date" value="${esc(d.date||new Date().toISOString().slice(0,10))}"></div>
+        <div class="field"><label>Type</label>
+          <select id="f_type">
+            <option ${d.type==='Doctor'?'selected':''}>Doctor</option>
+            <option ${d.type==='Stockist'?'selected':''}>Stockist</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Name</label>
+        <input type="text" id="f_name" list="nameOptions" value="${esc(d.name||'')}" placeholder="Start typing or pick from list">
+        <datalist id="nameOptions">${names.map(n=>`<option value="${esc(n.value)}">`).join('')}</datalist>
+      </div>
+      <div class="field"><label>Purpose</label><input type="text" id="f_purpose" value="${esc(d.purpose||'')}" placeholder="e.g. New product detailing, order collection"></div>
+      <div class="field"><label>Follow-up date (optional)</label><input type="date" id="f_followup" value="${esc(d.followup||'')}"></div>
+      <div class="field"><label>Notes</label><textarea id="f_notes" rows="2">${esc(d.notes||'')}</textarea></div>
+    `;},
+    read: () => ({
+      date: document.getElementById('f_date').value,
+      type: document.getElementById('f_type').value,
+      name: document.getElementById('f_name').value.trim(),
+      purpose: document.getElementById('f_purpose').value.trim(),
+      followup: document.getElementById('f_followup').value,
+      notes: document.getElementById('f_notes').value.trim(),
+    })
+  }
+};
+
+let editingKey = null, editingId = null;
+
+function openModal(key, id=null){
+  editingKey = key; editingId = id;
+  const isEdit = !!id;
+  const record = isEdit ? DATA[key].find(r=>r.id===id) : {};
+  const form = FORMS[key];
+  document.getElementById('modalBody').innerHTML = `
+    <h3>${form.title(isEdit)}</h3>
+    <form id="entryForm">
+      ${form.fields(record)}
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add'}</button>
+      </div>
+    </form>
+  `;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('entryForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const values = FORMS[key].read();
+    if(isEdit){
+      const rec = DATA[key].find(r=>r.id===id);
+      Object.assign(rec, values);
+    } else {
+      DATA[key].push({ id: uid(), ...values });
+    }
+    save(key);
+    closeModal();
+    renderAll();
+  });
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); editingKey=null; editingId=null; }
+
+function attachHandlers(){
+  document.querySelectorAll('[data-open]').forEach(b=> b.addEventListener('click', ()=> openModal(b.dataset.open)));
+  document.querySelectorAll('[data-edit]').forEach(b=> b.addEventListener('click', ()=> openModal(b.dataset.edit, b.dataset.id)));
+  document.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{
+    const key = b.dataset.del, id = b.dataset.id;
+    if(confirm('Remove this entry? This cannot be undone.')){
+      DATA[key] = DATA[key].filter(r=>r.id!==id);
+      save(key);
+      renderAll();
+    }
+  }));
+
+  const searchMap = {
+    stockSearch: { data:'stock', wrap:'stockTableWrap', fn:stockTable, keys:['name','batch'] },
+    expenseSearch: { data:'expenses', wrap:'expenseTableWrap', fn:expenseTable, keys:['category','note'] },
+    stockistSearch: { data:'stockists', wrap:'stockistTableWrap', fn:stockistTable, keys:['name','area'] },
+    doctorSearch: { data:'doctors', wrap:'doctorTableWrap', fn:doctorTable, keys:['name','specialty'] },
+    visitSearch: { data:'visits', wrap:'visitTableWrap', fn:visitTable, keys:['name','purpose'] },
+  };
+  Object.entries(searchMap).forEach(([inputId, cfg])=>{
+    const el = document.getElementById(inputId);
+    if(!el) return;
+    el.addEventListener('input', ()=>{
+      const q = el.value.toLowerCase();
+      const filtered = DATA[cfg.data].filter(r => cfg.keys.some(k => (r[k]||'').toLowerCase().includes(q)));
+      document.getElementById(cfg.wrap).innerHTML = cfg.fn(filtered);
+      attachHandlers();
+    });
+  });
+}
+
+document.getElementById('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
+
+/* ---------------- PWA: register service worker ---------------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+      console.warn('Service worker registration failed (offline/install features need real hosting):', err);
+    });
+  });
+}
+
+/* ---------------- INIT ---------------- */
+async function init(){
+  document.getElementById('content').innerHTML = `<div class="empty">Loading your register…</div>`;
+  await loadAll();
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
